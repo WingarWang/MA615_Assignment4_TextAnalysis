@@ -1,10 +1,4 @@
 ############################## prepare
-############################## library
-#install.packages("devtools")
-library(devtools)
-#devtools::install_github("Truenumbers/tnum/tnum")
-library(tnum)
-
 ############################## input the book
 library(gutenbergr)
 alice0 <- gutenberg_download(11)
@@ -125,13 +119,22 @@ alice2 %>%
                    max.words = 60)
 
 ############################## task 2: sentence-level analysis
+############################## library
+#install.packages("devtools")
+library(devtools)
+#devtools::install_github("Truenumbers/tnum/tnum")
+library(tnum)
+
+source("Book2TN-v6A-1.R")
+tnum.authorize("mssp1.bu.edu")
+tnum.setSpace("test2")
+
+
+##############################
+##############################
 ##############################
 
 
-
-##############################
-##############################
-##############################
 
 
 
