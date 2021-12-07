@@ -41,7 +41,7 @@ alice2 %>%
        geom_col() +
        labs(y = NULL)
 
-############################## task 1
+############################## task 1: bag of word analysis
 ############################## lexicons
 library(tidytext)
 get_sentiments("afinn")
@@ -109,8 +109,26 @@ bing_word_counts %>%
                  facet_wrap(~sentiment, scales = "free_y") +
                  labs(x = "Contribution to sentiment", y = NULL)
 
+############################## wordclouds
+library(wordcloud)
+alice2 %>%
+  anti_join(stop_words) %>%
+  count(word) %>%
+  with(wordcloud(word, n, max.words = 70))
+
+library(reshape2)
+alice2 %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(word, sentiment, sort = TRUE) %>%
+  acast(word ~ sentiment, value.var = "n", fill = 0) %>%
+  comparison.cloud(colors = c("gray20", "gray80"),
+                   max.words = 60)
+
+############################## task 2: sentence-level analysis
 ##############################
-##############################
+
+
+
 ##############################
 ##############################
 ##############################
