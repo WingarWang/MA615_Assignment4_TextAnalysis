@@ -135,22 +135,123 @@ library(tnum)
 
 tnum.authorize("mssp1.bu.edu")
 tnum.setSpace("test2")
+tnum.getSpace()
 
 ############################## TNs
-writeLines(alice0$text, "alice_text.txt")
-alice3 <- readLines("alice_text.txt")
-#simple version code
-#alice4 <- alice0$text
+alice3 <- gutenberg_download(gutenberg_id = 11)
+alice3$text <- gsub("’","'",alice3$text)
+alice3$text <- gsub('“','"',alice3$text)
+alice3$text <- gsub('”','"',alice3$text)
+alice3$text <- gsub('—','',alice3$text)
+alice3$text <- gsub('_','',alice3$text)
+alice3$text <- gsub("‘","'",alice3$text)
+
+writeLines(alice3$text, "alice_text.txt")
+alice4 <- readLines("alice_text.txt")
+show(alice4)
+
+#WRONG: appear chinese and messy codes:
+#writeLines(alice0$text, "alice_text.txt")
+#alice5 <- readLines("alice_text.txt")
+#show(alice5)
+#simple version code above:
+#alice5 <- alice0$text
+ 
+#WRONG: I copy the words on the website, but there are still messy codes:
+#alice6 <- readLines("alice_text_2.txt")
+#show(alice6)
 
 source("Book2TN-v6A-1.R")
-#tnBooksFromLines(alice3, "carroll/alice")
 
+#test:
+#a <- readLines("a.txt")
+#show(a)
+#tnBooksFromLines(a, "bookaaaaa/aaaaaaaaa") 
+
+tnBooksFromLines(alice4, "LewisCarrol/alice") 
+#carroll/alice
+#LewisCarroll/AliceWonderland
 tnum.getDBPathList(taxonomy = "subject", levels=2)
+tnum.getDBPathList(taxonomy = "subject", levels=1)
+
+tnum.query("LewisCarrol/AliceWonderland# has *")
 
 ############################## explore
-w10 <- tnum.query("wells12/hw12# has ordinal", max=1800)
+##  The ordinal numbers for the entire book 
+##  show the sequence of objects in order of their appearance.
+w10 <- tnum.query("carroll/alice# has ordinal", max=1800)
 wdf10 <- tnum.objectsToDf((w10))
 
+## Examing the first 50 TNs  makes it easy to see the Table of Contents
+## and to see that object 22 is the heading at the start of Chapter 1
+## This shows the Table of Contents
+w11 <- tnum.query("carroll/alice# has text", start = 3 ,max=18)
+wdf11 <- tnum.objectsToDf((w11))
+
+table_of_contents <- wdf11 %>% select(string.value) 
+
+w12 <- tnum.query("carroll/alice# has text", start = 3 ,max=18)
+wdf12 <- tnum.objectsToDf((w12))
+
+## Look at just the headings shows the structure of the book
+w13 <- tnum.query("carroll/alice/heading# has text", max=40) #############
+wdf13 <- tnum.objectsToDf(w13)
+
+## It may look like the table of contents is repeated twice,
+## but examing the ordinals produces chapter list that includes the 
+## ordinal location for the heading of each chapter
+w14 <- tnum.query("carroll/alice/heading# has ordinal", max=40) #############
+wdf14 <- tnum.objectsToDf(w14)
+
+chapter_locations <- left_join(select(wdf13, subject, string.value), 
+                               select(wdf14, subject, numeric.value)) %>% 
+  slice(22:38)
+## add column for chapter number
+chapter_locations %<>% mutate(chapter=1:17)
+
+w15 <- tnum.query("carroll/alice/section:0022# has ordinal")
+wdf15 <- tnum.objectsToDf(w15)
+
+##############################
+a <- chapter_locations %>% filter(chapter==2) %>% 
+  select(numeric.value) %>% 
+  unlist()
+a <- str_pad(as.character(a),4,side="left",pad="0")
+
+b <- paste0("carroll/alice/section:",a,"#", " has ordinal")
+b
+
+w16 <- tnum.query("carroll/alice/section:0022# has ordinal")
+
+##############################
+## chapter 1 para 1, word counts for the 3 sentences in para 1
+q20 <- tnum.query("carroll/alice# has *", max=3)
+df20 <- tnum.objectsToDf(q20)
+
+#  chapter locations  ordinal numbers
+ord_ch1 <- unlist(tnum.query("carroll/alice/heading:0022# has ordinal"))
+ord_ch2 <- unlist(tnum.query("carroll/alice/heading:0023# has ordinal"))
+
+
+ch1_txt <- tnum.query("carroll/alice/section:0022/paragraph:0002/# has text", max=30)
+
+ch1_txt_df <- tnum.objectsToDf(ch1_txt)
+ch1_txt_df$string.value
+
+
+
+ch2_txt <- tnum.query("carroll/alice/section:0022/paragraph:0002/sentence:# has *", max=30)
+ch2_txt_df <- tnum.objectsToDf(ch2_txt)
+
+ch2_txt_df$string.value
+
+length(ch2_txt_df$string.value)
+
+
+q21 <- tnum.query("carroll/alice/section:0022/paragraph:0001/# has *", max = 30)
+df21 <- tnum.objectsToDf(q21)
+
+w20 <- tnum.query()
 
 ##############################
 ##############################
