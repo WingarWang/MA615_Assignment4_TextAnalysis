@@ -131,10 +131,12 @@ library(devtools)
 #devtools::install_github("Truenumbers/tnum/tnum")
 library(tnum)
 
-#library(knitr)
+library(knitr)
 
 tnum.authorize("mssp1.bu.edu")
 tnum.setSpace("test2")
+tnum.getSpace()
+tnum.setSpace("test3")
 tnum.getSpace()
 
 ############################## TNs
@@ -164,17 +166,17 @@ show(alice4)
 source("Book2TN-v6A-1.R")
 
 #test:
-#a <- readLines("a.txt")
-#show(a)
-#tnBooksFromLines(a, "bookaaaaa/aaaaaaaaa") 
+#test <- readLines("test.txt")
+#show(test)
+#tnBooksFromLines(test, "just_a_test/test") 
 
-tnBooksFromLines(alice4, "LewisCarrol/alice") 
+tnBooksFromLines(alice4, "carroll/alice") 
 #carroll/alice
 #LewisCarroll/AliceWonderland
 tnum.getDBPathList(taxonomy = "subject", levels=2)
 tnum.getDBPathList(taxonomy = "subject", levels=1)
 
-tnum.query("LewisCarrol/AliceWonderland# has *")
+#tnum.query("LewisCarrol/AliceWonderland# has *")
 
 ############################## explore
 ##  The ordinal numbers for the entire book 
@@ -253,8 +255,24 @@ df21 <- tnum.objectsToDf(q21)
 
 w20 <- tnum.query()
 
+############################## task 3: sentimentr
 ##############################
-##############################
+library(sentimentr)
+
+dq_text <- filter(df1, property == "text")
+line_ex <- dq_text$string.value[2178]
+sentiment(line_ex)
+sents <- sentiment(get_sentences(dq_text))
+
+dq_text %<>% separate(col = subject, into = c("author", "book", "chapter", "paragraph","sentence"), sep = "/", fill = "right")
+
+sents_chapter <- sentiment_by(get_sentences(dq_text), by = 'chapter')
+# sents_chapter <- filter(sents_chapter, word_count > 100) %>%
+#   mutate(sents_chapter, chapter = substr(chapter, 9,12)) %>%
+#   mutate(chapter = as.numeric(chapter))
+
+ggplot(sents_chapter, aes(chapter, ave_sentiment)) +
+  geom_col(show.legend = FALSE)
 
 
 
