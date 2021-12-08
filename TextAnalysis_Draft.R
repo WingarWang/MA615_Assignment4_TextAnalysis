@@ -1,7 +1,7 @@
 ############################## prepare
 ############################## input the book
 library(gutenbergr)
-alice0 <- gutenberg_download(11)
+alice0 <- gutenberg_download(gutenberg_id = 11)
 
 ############################## clear up
 library(dplyr)
@@ -19,7 +19,12 @@ alice1 <- alice0 %>%
 library(tidytext)
 data(stop_words)
 alice2 <- alice1 %>%
-          unnest_tokens(word, text) %>%
+          unnest_tokens(word, text) 
+
+#change ’ to '
+alice2$word <- gsub("’","'",alice2$word)
+
+alice2 <- alice2 %>%
           anti_join(stop_words)
 
 ############################## check
@@ -51,6 +56,7 @@ alice2 %>%
       count(word, sort = TRUE)
 
 ############################## bing
+library(tidyr)
 alice_sentiment <- alice2 %>%
   inner_join(get_sentiments("bing")) %>%
   count(index = linenumber %/% 80, sentiment) %>%
@@ -108,7 +114,7 @@ library(wordcloud)
 alice2 %>%
   anti_join(stop_words) %>%
   count(word) %>%
-  with(wordcloud(word, n, max.words = 70))
+  with(wordcloud(word, n, max.words = 55))
 
 library(reshape2)
 alice2 %>%
@@ -116,7 +122,7 @@ alice2 %>%
   count(word, sentiment, sort = TRUE) %>%
   acast(word ~ sentiment, value.var = "n", fill = 0) %>%
   comparison.cloud(colors = c("gray20", "gray80"),
-                   max.words = 60)
+                   max.words = 50)
 
 ############################## task 2: sentence-level analysis
 ############################## library
@@ -125,12 +131,27 @@ library(devtools)
 #devtools::install_github("Truenumbers/tnum/tnum")
 library(tnum)
 
-source("Book2TN-v6A-1.R")
+#library(knitr)
+
 tnum.authorize("mssp1.bu.edu")
 tnum.setSpace("test2")
 
+############################## TNs
+writeLines(alice0$text, "alice_text.txt")
+alice3 <- readLines("alice_text.txt")
+#simple version code
+#alice4 <- alice0$text
 
-##############################
+source("Book2TN-v6A-1.R")
+#tnBooksFromLines(alice3, "carroll/alice")
+
+tnum.getDBPathList(taxonomy = "subject", levels=2)
+
+############################## explore
+w10 <- tnum.query("wells12/hw12# has ordinal", max=1800)
+wdf10 <- tnum.objectsToDf((w10))
+
+
 ##############################
 ##############################
 
