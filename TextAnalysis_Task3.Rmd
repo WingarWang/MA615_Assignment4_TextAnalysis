@@ -11,7 +11,7 @@ output:
 
 ## Task 3: sentence-level analysis
 
-```{r}
+```{r, echo=FALSE, message= FALSE, warning = FALSE}
 # library some packages
 #install.packages("devtools")
 library(devtools)
@@ -37,14 +37,14 @@ alice3$text <- gsub("‘","'",alice3$text)
 
 writeLines(alice3$text, "alice_text.txt")
 alice4 <- readLines("alice_text.txt")
-show(alice4)
+#show(alice4)
 
 # source TN
 source("Book2TN-v6A-1.R")
 ```
 
 
-```{r}
+```{r, echo=FALSE, message= FALSE, warning = FALSE}
 # ingest my book
 #tnBooksFromLines(alice4, "carroll/alice")
 
@@ -53,16 +53,16 @@ tnum.getDBPathList(taxonomy = "subject", levels=2)
 #tnum.getDBPathList(taxonomy = "subject", levels=1)
 ```
 
-```{r}
+```{r, echo=FALSE, message= FALSE, warning = FALSE}
 # query section
 query_section <- tnum.query('carroll/alice/section# has text',max=1000)  
 section <- tnum.objectsToDf(query_section)
 
 # clear up section
+library(tidyr)
 category <- section %>% 
-            separate(
-              col = subject,
-              into = c("carroll", "alice","section","paragraph","sentence"), 
+            separate(col = subject,
+                     into = c("carroll","alice","section","paragraph","sentence"), 
               sep = "/") 
 category <- category %>%
             select(section,paragraph,sentence,string.value)
@@ -88,7 +88,7 @@ category_clean[766:828,1] <- 12
 ```
 
 
-```{r}
+```{r, echo=FALSE, message= FALSE, warning = FALSE}
 # sentimentr
 library(sentimentr)
 
@@ -96,8 +96,7 @@ library(sentimentr)
 sentiment <- category_clean %>% 
              get_sentences() %>% 
              sentiment() %>% 
-             mutate(polarity_level = ifelse(sentiment<0.2, "Negative",
-                                  ifelse(sentiment>0.2,"Positive","Neutral")))
+             mutate(polarity_level = ifelse(sentiment<0.2, "Negative",                                  ifelse(sentiment>0.2,"Positive","Neutral")))
 
 sentiment$element_id <- as.numeric(sentiment$element_id)
 sentiment$sentiment <- as.numeric(sentiment$sentiment)
@@ -107,16 +106,43 @@ sentiment_neg <- sentiment %>%
                  filter(polarity_level == "Negative") 
 sentiment_pos <- sentiment %>% 
                  filter(polarity_level == "Positive") 
+
+# prepare for the stack plot
+stackplot <- sentiment %>%
+                       count(section,polarity_level)
+```
+
+```{r}
+# visualization 1: stack plot for each chapter
+ggplot(data=stackplot) +
+  geom_col(aes(y=n,x=section,fill=polarity_level)) +
+  theme_minimal()
+```
+
+```{r}
+# visualization 2: negative and positive line plot
+ggplot() + 
+       geom_line(data=sentiment_neg, aes(x=element_id, y=sentiment),color="brown3") +
+       geom_line(data=sentiment_pos, aes(x=element_id, y=sentiment),color="skyblue2") +
+       ylim(-1.5, 1) +
+       geom_hline(yintercept=0.2, linetype="dashed", color = "black") + 
+       labs(x="story development",y="sentiment",subtitle = "red line: negative, blue line: positive") 
 ```
 
 
 ```{r}
-# visualization 1: trend of sentiment          
-plot(sentiment)
+# visualization 3: sentiment in each chapter
+ggplot(data=sentiment) + 
+  geom_point(aes(x= element_id, y = sentiment, color = sentiment)) +
+  scale_color_gradient(low="red", high="blue") +
+  theme(legend.position = "right") +
+  facet_wrap(~section,c(4)) +
+  geom_hline(yintercept=0, linetype="dashed", color = "black") + 
+  labs(x="story development for each chapter",y="sentiment")
 ```
 
 ```{r}
-# visualization 2: average sentiment density plot
+# visualization 4: average sentiment density plot
 category_clean %>% 
      get_sentences() %>% 
      sentiment_by(by = NULL) %>% 
@@ -124,28 +150,10 @@ category_clean %>%
      geom_density(aes(ave_sentiment)) 
 ```
 
-```{r}
-# visualization 3: negative and positive line plot
-ggplot() + 
-       geom_line(data=sentiment_neg, aes(x=element_id, y=sentiment),color="brown3") +
-       geom_line(data=sentiment_pos, aes(x=element_id, y=sentiment),color="skyblue3") +
-       ylim(-1.5, 1) +
-       geom_hline(yintercept=0.2, linetype="dashed", color = "black")
-```
-
-```{r}
-# visualization 4: sentiment in each chapter
-ggplot(data=sentiment) + 
-  geom_point(aes(x= element_id, y = sentiment, color = section)) + 
-  theme(legend.position = "right") +
-  facet_wrap(~section,c(4)) +
-  geom_hline(yintercept=0, linetype="dashed", color = "black")
-```
-
 
 ### Compare task 3 with task 2
 
-```{r}
+```{r, echo=FALSE, message= FALSE, warning = FALSE}
 # clean up the data
 compare_data <- alice3 %>%
           select(-gutenberg_id) %>%
@@ -181,7 +189,7 @@ compare_plot2 <- ggplot(alice_sentiment, aes(index, sentiment)) +
 ```
 
 ```{r}
-# visualization 4: compare task 3 with task 2
+# visualization 5: compare task 3 with task 2
 ggarrange(compare_plot1, compare_plot2, heights = c(2, 0.7),
           ncol = 1, nrow = 2)
 ```
@@ -190,29 +198,30 @@ ggarrange(compare_plot1, compare_plot2, heights = c(2, 0.7),
 ## Extra credit: character-level analysis
 xxxx
 
-```{r}
+```{r, echo=FALSE, message= FALSE, warning = FALSE}
 # select 1 character
-sentiment$character <- ifelse(str_detect(sentiment$string,"Alice", negate = FALSE)==TRUE, "Alice",ifelse(str_detect(sentiment$string,"Queen", negate = FALSE)==TRUE, "Queen",ifelse(str_detect(sentiment$string,"King", negate = FALSE)==TRUE, "King",ifelse(str_detect(sentiment$string,"Turtle", negate = FALSE)==TRUE, "Turtle",ifelse(str_detect(sentiment$string,"Hatter", negate = FALSE)==TRUE,"Hatter",ifelse(str_detect(sentiment$string,"Gryphon", negate = FALSE)==TRUE,"Gryphon", ""))))))
+sentiment$character <- ifelse(str_detect(sentiment$string,"Alice"), "Alice", ifelse(str_detect(sentiment$string,"Queen"), "Queen", ifelse(str_detect(sentiment$string,"King"), "King", ifelse(str_detect(sentiment$string,"Turtle"), "Turtle", ifelse(str_detect(sentiment$string,"Hatter"),"Hatter", ifelse(str_detect(sentiment$string,"Gryphon"),"Gryphon", ""))))))
 sentiment1 <- filter(sentiment, character != "")
+sentiment1 <- sentiment1[-c(1:3),]
 
 # select 2 characters
-sentiment$character2 <- ifelse(str_detect(sentiment$string,"Queen", negate = FALSE)==TRUE & sentiment$character == "Alice", "A&Q",                                     ifelse(str_detect(sentiment$string,"King", negate = FALSE)==TRUE & sentiment$character == "Alice", "A&K",                                            ifelse(str_detect(sentiment$string,"Turtle", negate = FALSE)==TRUE & sentiment$character == "Alice", "A&T",                                                  ifelse(str_detect(sentiment$string,"Hatter", negate = FALSE)==TRUE & sentiment$character == "Alice", "A&H", ifelse(str_detect(sentiment$string,"Gryphon", negate = FALSE)==TRUE & sentiment$character == "Alice","A&G", "")))))
-sentiment2 <- filter(sentiment, character2 != "")
-
-```
-
-```{r}
-# visualization 5:
-ggplot(data=sentiment1) + 
-  geom_histogram(aes(sentiment, color=character)) +
-  facet_wrap(~character)
+sentiment2 <- filter(sentiment1, character == "Alice")
+sentiment2$character <- ifelse(str_detect(sentiment2$string,"Queen"),"A&Q", ifelse(str_detect(sentiment2$string,"King"),"A&K", ifelse(str_detect(sentiment2$string,"Turtle"), "A&T", ifelse(str_detect(sentiment2$string,"Hatter"), "A&H", ifelse(str_detect(sentiment2$string,"Gryphon"),"A&G", "")))))
+sentiment2 <- filter(sentiment2, character != "")
 ```
 
 ```{r}
 # visualization 6:
+ggplot(data=sentiment1) + 
+  geom_histogram(aes(sentiment, fill=character), color="white") +
+  facet_wrap(~character)
+```
+
+```{r}
+# visualization 7:
 ggplot(data=sentiment2) + 
-  geom_histogram(aes(sentiment, color=character2)) +
-  facet_wrap(~character2)
+  geom_histogram(aes(sentiment, fill=character), color="white") +
+  facet_wrap(~character)
 ```
 
 
@@ -221,6 +230,7 @@ ggplot(data=sentiment2) +
 Haviland Wright, tnum - instructions and examples - v5.Rmd
 [https://www.gutenberg.org/ebooks/11](https://www.gutenberg.org/ebooks/11)
 [https://www.r-bloggers.com/2020/04/sentiment-analysis-in-r-with-sentimentr-that-handles-negation-valence-shifters/](https://www.r-bloggers.com/2020/04/sentiment-analysis-in-r-with-sentimentr-that-handles-negation-valence-shifters/)
+[https://www.rdocumentation.org/packages/stringr/versions/1.4.0/topics/str_detect](https://www.rdocumentation.org/packages/stringr/versions/1.4.0/topics/str_detect)
 
 
 
