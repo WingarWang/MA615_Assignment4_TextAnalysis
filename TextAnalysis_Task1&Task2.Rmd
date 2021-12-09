@@ -171,11 +171,12 @@ alice2 %>%
 ```
 
 
-## Extra credit
+## Extra credit: another lexicon
 xxxxxxxx
 Error in match.arg(lexicon) : 'arg' should be one of “bing”, “afinn”, “loughran”, “nrc”
 
 ```{r}
+# another method
 alice_loughran <- alice2 %>%
   inner_join(get_sentiments("loughran")) %>%
   count(index = linenumber %/% 80, sentiment) %>%
@@ -185,13 +186,14 @@ alice_loughran <- alice2 %>%
 ```
 
 ```{r}
+# visualization 7: 
 ggplot(alice_loughran, aes(index, sentiment)) +
   geom_col(show.legend = FALSE)
 ```
 
 
 ```{r}
-# visualization 3: comparing the three sentiment dictionaries
+# visualization 8: comparing the three sentiment dictionaries
 bind_rows(afinn, bing_and_nrc, alice_loughran) %>%
                                ggplot(aes(index, sentiment, fill = method)) +
                                geom_col(show.legend = FALSE) +
