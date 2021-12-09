@@ -10,7 +10,6 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(warning=F,message = F,echo=F,highlight=F)
-#knitr::opts_chunk$set(echo = TRUE,out.width="0.9\\linewidth",dev="png",fig.align  = 'center')
 knitr::opts_chunk$set(fig.width=6, fig.height=4,fig.align = "center") 
 ```
 

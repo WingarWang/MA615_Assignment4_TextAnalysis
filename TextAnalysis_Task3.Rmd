@@ -8,6 +8,10 @@ output:
   html_document: default
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning=F,message = F,echo=F,highlight=F)
+knitr::opts_chunk$set(fig.width=6, fig.height=4,fig.align = "center") 
+```
 
 ## Task 3: sentence-level analysis
 
@@ -27,6 +31,7 @@ tnum.setSpace("test3")
 tnum.getSpace()
 
 # prepare for the book text
+library(gutenbergr)
 alice3 <- gutenberg_download(gutenberg_id = 11)
 alice3$text <- gsub("’","'",alice3$text)
 alice3$text <- gsub('“','"',alice3$text)
@@ -43,6 +48,9 @@ alice4 <- readLines("alice_text.txt")
 source("Book2TN-v6A-1.R")
 ```
 
+### input the book
+
+Because test2 space is too busy, I use test3 space. And below is my "carroll/alice".
 
 ```{r, echo=FALSE, message= FALSE, warning = FALSE}
 # ingest my book
@@ -53,12 +61,13 @@ tnum.getDBPathList(taxonomy = "subject", levels=2)
 #tnum.getDBPathList(taxonomy = "subject", levels=1)
 ```
 
-```{r, echo=FALSE, message= FALSE, warning = FALSE}
+```{r}
 # query section
 query_section <- tnum.query('carroll/alice/section# has text',max=1000)  
 section <- tnum.objectsToDf(query_section)
 
 # clear up section
+library(dplyr)
 library(tidyr)
 category <- section %>% 
             separate(col = subject,
@@ -87,6 +96,7 @@ category_clean[690:765,1] <- 11
 category_clean[766:828,1] <- 12
 ```
 
+### sentimentr
 
 ```{r, echo=FALSE, message= FALSE, warning = FALSE}
 # sentimentr
@@ -114,10 +124,13 @@ stackplot <- sentiment %>%
 
 ```{r}
 # visualization 1: stack plot for each chapter
+library(ggplot2)
 ggplot(data=stackplot) +
   geom_col(aes(y=n,x=section,fill=polarity_level)) +
   theme_minimal()
 ```
+
+The graph above shows the percentage of emotions in each chapter.
 
 ```{r}
 # visualization 2: negative and positive line plot
@@ -129,6 +142,9 @@ ggplot() +
        labs(x="story development",y="sentiment",subtitle = "red line: negative, blue line: positive") 
 ```
 
+The figure above shows the changes in positive and negative emotions as the storyline develops. The two lines are like two time series.
+
+It can be seen that as the book goes forward, the positive emotions are less and the negative emotions appear more and more dense. This coincides with the middle and later part of the story, that is, the battle between Alice and the Red Queen. The adventure plot is becoming more and more exciting and thrilling, and more and more negative emotions.
 
 ```{r}
 # visualization 3: sentiment in each chapter
@@ -141,6 +157,8 @@ ggplot(data=sentiment) +
   labs(x="story development for each chapter",y="sentiment")
 ```
 
+The above plot is a point plot of the emotions of each chapter.
+
 ```{r}
 # visualization 4: average sentiment density plot
 category_clean %>% 
@@ -150,11 +168,13 @@ category_clean %>%
      geom_density(aes(ave_sentiment)) 
 ```
 
+The above plot is the average sentiment density plot. The curve shows a left-skewed distribution, that is, the density of negative emotions is greater.
 
 ### Compare task 3 with task 2
 
 ```{r, echo=FALSE, message= FALSE, warning = FALSE}
 # clean up the data
+library(tidytext)
 compare_data <- alice3 %>%
           select(-gutenberg_id) %>%
           mutate(linenumber = row_number(),
@@ -178,6 +198,25 @@ compare_plot1 <- ggplot(compare, aes(index, sentiment)) +
   geom_col(show.legend = FALSE)
 
 # task 2 result
+alice0 <- gutenberg_download(gutenberg_id = 11)
+library(dplyr)
+library(stringr)
+alice1 <- alice0 %>%
+          select(-gutenberg_id) %>%
+          mutate(linenumber = row_number(),
+          chapter = cumsum(str_detect(text, 
+                                      regex("^chapter [\\divxlc]",
+                                      ignore_case = TRUE)))) %>%
+          filter(linenumber >= 30) %>%
+          ungroup()
+library(tidytext)
+data(stop_words)
+alice2 <- alice1 %>%
+          unnest_tokens(word, text) 
+alice2$word <- gsub("’","'",alice2$word)
+alice2 <- alice2 %>%
+          anti_join(stop_words)
+
 alice_sentiment <- alice2 %>%
   inner_join(get_sentiments("bing")) %>%
   count(index = linenumber %/% 80, sentiment) %>%
@@ -190,13 +229,16 @@ compare_plot2 <- ggplot(alice_sentiment, aes(index, sentiment)) +
 
 ```{r}
 # visualization 5: compare task 3 with task 2
+library(ggpubr)
 ggarrange(compare_plot1, compare_plot2, heights = c(2, 0.7),
           ncol = 1, nrow = 2)
 ```
 
+The above figure shows that task 2 and task 3 use the same method-Bing method to calculate emotional scores. From a trend point of view, the result of task 3 revealed more positive emotions than the result of task 2. The positive emotions in Chapters 1, 4 and 6 do not match the results of Task 2.
 
 ## Extra credit: character-level analysis
-xxxx
+
+According to Task 2, I selected six characters with the highest frequency. They are Alice, Queen, King, Turtle, Hatter and Gryphon.
 
 ```{r, echo=FALSE, message= FALSE, warning = FALSE}
 # select 1 character
@@ -217,6 +259,10 @@ ggplot(data=sentiment1) +
   facet_wrap(~character)
 ```
 
+Then, I filtered them from each chapter, each paragraph, and each sentence. Draw a histogram of their emotional scores.
+
+It can be seen that the emotional scores of Gryphon and Hatter are positive, Turtle and Queen are negative, and Alice and King are relatively neutral.
+
 ```{r}
 # visualization 7:
 ggplot(data=sentiment2) + 
@@ -224,6 +270,9 @@ ggplot(data=sentiment2) +
   facet_wrap(~character)
 ```
 
+Since Alice is the absolute protagonist of the book, I also calculated the emotional scores of the other 5 characters when they met her.
+
+It can be seen that Alice and King had a very positive mood when they met. But her encounter with Turtle was negative. It can be inferred that when Alice is with different characters, the direction of the storyline is good or bad.
 
 ## Reference 
 
