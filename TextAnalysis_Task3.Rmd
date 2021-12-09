@@ -1,0 +1,108 @@
+---
+title: "Task 3: sentence-level analysis"
+author: "Yujia Wang"
+date: "12/8/2021"
+output:
+  pdf_document: 
+          latex_engine: xelatex
+  html_document: default
+---
+
+
+## Task 3: 
+
+```{r}
+# library some packages
+#install.packages("devtools")
+library(devtools)
+#devtools::install_github("Truenumbers/tnum/tnum")
+library(tnum)
+library(knitr)
+
+# prepare for the environment
+tnum.authorize("mssp1.bu.edu")
+#tnum.setSpace("test2")
+#tnum.getSpace()
+tnum.setSpace("test3")
+tnum.getSpace()
+
+# prepare for the book text
+alice3 <- gutenberg_download(gutenberg_id = 11)
+alice3$text <- gsub("’","'",alice3$text)
+alice3$text <- gsub('“','"',alice3$text)
+alice3$text <- gsub('”','"',alice3$text)
+alice3$text <- gsub('—','',alice3$text)
+alice3$text <- gsub('_','',alice3$text)
+alice3$text <- gsub("‘","'",alice3$text)
+
+writeLines(alice3$text, "alice_text.txt")
+alice4 <- readLines("alice_text.txt")
+show(alice4)
+
+# source TN
+source("Book2TN-v6A-1.R")
+
+# ingest my book
+#tnBooksFromLines(alice4, "carroll/alice")
+
+# check the book is in the environment
+tnum.getDBPathList(taxonomy = "subject", levels=2)
+#tnum.getDBPathList(taxonomy = "subject", levels=1)
+
+# add chapter number and line number #############
+alice5 <- alice3 %>%
+  mutate(
+    linenumber = row_number(),
+    chapter = cumsum(str_detect(text, 
+                                regex("^chapter [\\divxlc]", 
+                                      ignore_case = TRUE)))) %>%
+  unnest_tokens(word, text)
+```
+
+```{r}
+# query section and heading text to display the head
+q26<- tnum.query('carroll/alice# has text',max=60)
+df26 <- tnum.objectsToDf(q26) # turn the object to df
+df26 %>% select(subject:string.value)%>% head()
+
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+
+```
+
+
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+
+
+
+
+
+
+
+

@@ -1,5 +1,5 @@
 ---
-title: "Task 2: bag of words analysis"
+title: "Task 1 & Task 2"
 author: "Yujia Wang"
 date: "12/8/2021"
 output:
@@ -205,17 +205,5 @@ bind_rows(afinn, bing_and_nrc, alice_loughran) %>%
 [https://www.tidytextmining.com/sentiment.html](https://www.tidytextmining.com/sentiment.html)
 [https://www.rdocumentation.org/packages/textdata/versions/0.4.1](https://emilhvitfeldt.github.io/textdata/reference/lexicon_loughran.html)
 [https://www.rdocumentation.org/packages/textdata/versions/0.4.1/topics/lexicon_loughran](https://www.rdocumentation.org/packages/textdata/versions/0.4.1/topics/lexicon_loughran)
-
-
-
-
-
-
-
-
-
-
-
-
 
 
