@@ -1,0 +1,221 @@
+---
+title: "Task 2: bag of words analysis"
+author: "Yujia Wang"
+date: "12/8/2021"
+output:
+  pdf_document: 
+          latex_engine: xelatex
+  html_document: default
+---
+
+
+## Task 1: Pick a book
+xxxxxxxxxxxxxxxxxxxxxxxx
+
+```{r}
+# input the book
+library(gutenbergr)
+alice0 <- gutenberg_download(gutenberg_id = 11)
+
+# clear up the book
+library(dplyr)
+library(stringr)
+alice1 <- alice0 %>%
+          select(-gutenberg_id) %>%
+          mutate(linenumber = row_number(),
+          chapter = cumsum(str_detect(text, 
+                                      regex("^chapter [\\divxlc]",
+                                      ignore_case = TRUE)))) %>%
+          filter(linenumber >= 30) %>%
+          ungroup()
+
+# prepare for the text
+library(tidytext)
+data(stop_words)
+alice2 <- alice1 %>%
+          unnest_tokens(word, text) 
+
+#change ’ to ', otherwise stopwords can't recognize it
+alice2$word <- gsub("’","'",alice2$word)
+
+# delete the stopwords
+alice2 <- alice2 %>%
+          anti_join(stop_words)
+
+# check the final data
+alice2 %>%
+       count(word, sort = TRUE)
+```
+
+
+```{r}
+# visualization 1: the most common words
+library(ggplot2)
+alice2 %>%
+       count(word, sort = TRUE) %>%
+       filter(n > 50) %>%
+       mutate(word = reorder(word, n)) %>%
+       ggplot(aes(n, word)) +
+       geom_col() +
+       labs(y = NULL)
+```
+
+
+## TASK 2: bag of word analysis
+xxxxxxxxxxxxxxxxxxx
+
+```{r}
+# input lexicons
+library(tidytext)
+get_sentiments("afinn")
+get_sentiments("bing")
+get_sentiments("nrc")
+
+# fliter nrc: joy
+nrc_joy <- get_sentiments("nrc") %>% 
+  filter(sentiment == "joy")
+
+alice2 %>%
+       inner_join(nrc_joy) %>%
+       count(word, sort = TRUE)
+
+# bing: positive - negative
+library(tidyr)
+alice_sentiment <- alice2 %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(index = linenumber %/% 80, sentiment) %>%
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>% 
+  mutate(sentiment = positive - negative)
+```
+
+```{r}
+# visualization 2: sentiment scores across the plot trajectory
+ggplot(alice_sentiment, aes(index, sentiment)) +
+  geom_col(show.legend = FALSE)
+```
+
+
+```{r}
+# prepare for comparing the three sentiment dictionaries
+afinn <- alice2 %>% 
+         inner_join(get_sentiments("afinn")) %>% 
+         group_by(index = linenumber %/% 80) %>% 
+         summarise(sentiment = sum(value)) %>% 
+         mutate(method = "AFINN")
+
+bing_and_nrc <- bind_rows(
+                alice2 %>% 
+                       inner_join(get_sentiments("bing")) %>%
+                        mutate(method = "Bing et al."),
+                alice2 %>% 
+                       inner_join(get_sentiments("nrc") %>% 
+                       filter(sentiment %in% c("positive", "negative"))) %>%
+                       mutate(method = "NRC")) %>%
+                count(method, index = linenumber %/% 80, sentiment) %>%
+                pivot_wider(names_from = sentiment,
+                            values_from = n,
+                            values_fill = 0) %>% 
+                mutate(sentiment = positive - negative)
+```
+
+```{r}
+# visualization 3: comparing the three sentiment dictionaries
+bind_rows(afinn, bing_and_nrc) %>%
+                               ggplot(aes(index, sentiment, fill = method)) +
+                               geom_col(show.legend = FALSE) +
+                               facet_wrap(~method, ncol = 1, scales = "free_y")
+```
+
+
+```{r}
+# count the most common positive and negative words
+bing_word_counts <- alice2 %>%
+                           inner_join(get_sentiments("bing")) %>%
+                           count(word, sentiment, sort = TRUE) %>%
+                           ungroup()
+bing_word_counts
+```
+
+```{r}
+# visualization 4: the most common positive and negative words
+bing_word_counts %>%
+                 group_by(sentiment) %>%
+                 slice_max(n, n = 10) %>% 
+                 ungroup() %>%
+                 mutate(word = reorder(word, n)) %>%
+                 ggplot(aes(n, word, fill = sentiment)) +
+                 geom_col(show.legend = FALSE) +
+                 facet_wrap(~sentiment, scales = "free_y") +
+                 labs(x = "Contribution to sentiment", y = NULL)
+```
+
+
+```{r}
+# visualization 5: wordclouds 1
+library(wordcloud)
+alice2 %>%
+  anti_join(stop_words) %>%
+  count(word) %>%
+  with(wordcloud(word, n, max.words = 55,random.order=TRUE, colors=c("palegreen3","lightpink1")))
+```
+
+```{r}
+# visualization 6: wordclouds 2
+library(reshape2)
+alice2 %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(word, sentiment, sort = TRUE) %>%
+  acast(word ~ sentiment, value.var = "n", fill = 0) %>%
+  comparison.cloud(colors = c("brown2", "skyblue2"),
+                   max.words = 50)
+```
+
+
+## Extra credit
+xxxxxxxx
+Error in match.arg(lexicon) : 'arg' should be one of “bing”, “afinn”, “loughran”, “nrc”
+
+```{r}
+alice_loughran <- alice2 %>%
+  inner_join(get_sentiments("loughran")) %>%
+  count(index = linenumber %/% 80, sentiment) %>%
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>% 
+  mutate(sentiment = positive - negative) %>%
+  mutate(method = "LOUGHRAN")
+```
+
+```{r}
+ggplot(alice_loughran, aes(index, sentiment)) +
+  geom_col(show.legend = FALSE)
+```
+
+
+```{r}
+# visualization 3: comparing the three sentiment dictionaries
+bind_rows(afinn, bing_and_nrc, alice_loughran) %>%
+                               ggplot(aes(index, sentiment, fill = method)) +
+                               geom_col(show.legend = FALSE) +
+                               facet_wrap(~method, ncol = 1, scales = "free_y")
+```
+
+
+## Reference 
+
+[https://www.gutenberg.org/ebooks/11](https://www.gutenberg.org/ebooks/11)
+[https://www.tidytextmining.com/sentiment.html](https://www.tidytextmining.com/sentiment.html)
+[https://www.rdocumentation.org/packages/textdata/versions/0.4.1](https://emilhvitfeldt.github.io/textdata/reference/lexicon_loughran.html)
+[https://www.rdocumentation.org/packages/textdata/versions/0.4.1/topics/lexicon_loughran](https://www.rdocumentation.org/packages/textdata/versions/0.4.1/topics/lexicon_loughran)
+
+
+
+
+
+
+
+
+
+
+
+
+
+

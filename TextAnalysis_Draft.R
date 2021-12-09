@@ -166,11 +166,12 @@ show(alice4)
 source("Book2TN-v6A-1.R")
 
 #test:
-#test <- readLines("test.txt")
+#test <- readLines("alice_test.txt")
 #show(test)
 #tnBooksFromLines(test, "just_a_test/test") 
 
-tnBooksFromLines(alice4, "carroll/alice") 
+tnBooksFromLines(alice4, "carroll/alice")
+#past name:
 #carroll/alice
 #LewisCarroll/AliceWonderland
 tnum.getDBPathList(taxonomy = "subject", levels=2)
