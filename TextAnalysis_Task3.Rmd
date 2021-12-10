@@ -276,7 +276,7 @@ It can be seen that Alice and King had a very positive mood when they met. But h
 
 ## Reference 
 
-Haviland Wright, tnum - instructions and examples - v5.Rmd
+Professor Haviland Wright, tnum - instructions and examples - v5.Rmd
 [https://www.gutenberg.org/ebooks/11](https://www.gutenberg.org/ebooks/11)
 [https://www.r-bloggers.com/2020/04/sentiment-analysis-in-r-with-sentimentr-that-handles-negation-valence-shifters/](https://www.r-bloggers.com/2020/04/sentiment-analysis-in-r-with-sentimentr-that-handles-negation-valence-shifters/)
 [https://www.rdocumentation.org/packages/stringr/versions/1.4.0/topics/str_detect](https://www.rdocumentation.org/packages/stringr/versions/1.4.0/topics/str_detect)
