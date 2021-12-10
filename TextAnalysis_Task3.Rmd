@@ -137,7 +137,7 @@ stackplot <- sentiment %>%
                        count(section,polarity_level)
 ```
 
-```{r, fig.cap="stack plot for each chapter"}
+```{r, fig.cap="sentiment of each chapter"}
 # visualization 1: stack plot for each chapter
 library(ggplot2)
 ggplot(data=stackplot) +
@@ -154,7 +154,7 @@ The ninth and tenth chapters are also very emotional. These two chapters are con
 \newpage
 
 
-```{r, fig.cap=""}
+```{r, fig.cap="sentiment plot"}
 # visualization 2: 
 sentimentplot <- with(
     category_clean, 
@@ -172,13 +172,13 @@ plot(uncombine(sentimentplot))
 #The above plot is the average sentiment density plot. The curve shows a left-skewed distribution, that is, the density of negative emotions is greater.
 ```
 
-Figure 2 a gentle curve, showing the emotional fluctuations of the book.
+Figure 2 is a gentle curve, showing the emotional fluctuations of the book.
 
 
 \newpage
 
 
-```{r, fig.cap=""}
+```{r, fig.cap="emotion plot"}
 # visualization 3: 
 emotionplot <- with(
     category_clean, 
@@ -215,7 +215,7 @@ It can be seen that as the book goes forward, the positive emotions are lower an
 \newpage
 
 
-```{r, fig.cap="sentiment point plot in each chapter"}
+```{r, fig.cap="sentiment point of each chapter"}
 # visualization 5: sentiment in each chapter
 ggplot(data=sentiment) + 
   geom_point(aes(x= element_id, y = sentiment, color = sentiment)) +
