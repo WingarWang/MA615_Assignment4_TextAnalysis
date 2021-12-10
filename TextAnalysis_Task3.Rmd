@@ -9,13 +9,14 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(warning=F,message = F,echo=F,highlight=F)
-knitr::opts_chunk$set(fig.width=6, fig.height=4,fig.align = "center") 
+knitr::opts_chunk$set(warning=F, message = F, echo=F, highlight=F)
+knitr::opts_chunk$set(fig.width=6, fig.height=5,fig.align = "center") 
 ```
+
 
 ## Task 3: sentence-level analysis
 
-```{r, echo=FALSE, message= FALSE, warning = FALSE}
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 # library some packages
 #install.packages("devtools")
 library(devtools)
@@ -28,7 +29,7 @@ tnum.authorize("mssp1.bu.edu")
 #tnum.setSpace("test2")
 #tnum.getSpace()
 tnum.setSpace("test3")
-tnum.getSpace()
+#tnum.getSpace()
 
 # prepare for the book text
 library(gutenbergr)
@@ -48,30 +49,35 @@ alice4 <- readLines("alice_text.txt")
 source("Book2TN-v6A-1.R")
 ```
 
-### input the book
 
-Because test2 space is too busy, I use test3 space. And below is my "carroll/alice".
+### Tnum
 
-```{r, echo=FALSE, message= FALSE, warning = FALSE}
+Because test2 space is too busy, I use test3 space. The first result below is my tnum space "carroll/alice". The second result below is the tnum data frame (a part of it) I got.
+
+```{r}
 # ingest my book
 #tnBooksFromLines(alice4, "carroll/alice")
 
 # check the book is in the environment
 tnum.getDBPathList(taxonomy = "subject", levels=2)
 #tnum.getDBPathList(taxonomy = "subject", levels=1)
-```
 
-```{r}
 # query section
 query_section <- tnum.query('carroll/alice/section# has text',max=1000)  
 section <- tnum.objectsToDf(query_section)
 
+# section sample table
+section_show <- section[c(2:12),c(1,2,3)]
+section_show
+```
+
+```{r}
 # clear up section
 library(dplyr)
 library(tidyr)
 category <- section %>% 
             separate(col = subject,
-                     into = c("carroll","alice","section","paragraph","sentence"), 
+                     into = c("author","name","section","paragraph","sentence"), 
               sep = "/") 
 category <- category %>%
             select(section,paragraph,sentence,string.value)
@@ -79,9 +85,14 @@ colnames(category)[which(names(category) == "string.value")] <- "string"
 
 # simplify category
 category_clean <- category %>%
-                  mutate_at(c(1,2,3),~str_extract_all(.,"\\d+") %>% 
+                  mutate_at(c(1,2,3),~str_extract_all(.,"\\d+") %>%
                   unlist() %>%
                   as.numeric())
+#\d is a digit (a character in the range 0-9)
+#+ matches 1 or more occurrences of the character before
+#\d+ is 1 or more digits
+
+# manual input section
 category_clean[13:55,1] <- 1
 category_clean[56:98,1] <- 2
 category_clean[99:153,1] <- 3
@@ -96,9 +107,13 @@ category_clean[690:765,1] <- 11
 category_clean[766:828,1] <- 12
 ```
 
+
+\newpage
+
+
 ### sentimentr
 
-```{r, echo=FALSE, message= FALSE, warning = FALSE}
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 # sentimentr
 library(sentimentr)
 
@@ -122,18 +137,68 @@ stackplot <- sentiment %>%
                        count(section,polarity_level)
 ```
 
-```{r}
+```{r, fig.cap="stack plot for each chapter"}
 # visualization 1: stack plot for each chapter
 library(ggplot2)
 ggplot(data=stackplot) +
-  geom_col(aes(y=n,x=section,fill=polarity_level)) +
-  theme_minimal()
+  geom_col(aes(y=n,x=section,fill=polarity_level)) 
 ```
 
-The graph above shows the percentage of emotions in each chapter.
+Figure 1 shows the percentage of emotions in each chapter. 
 
-```{r}
-# visualization 2: negative and positive line plot
+The first chapter is the least emotional. This chapter is the strange experience of Alice falling into a new world, her body getting bigger and smaller, and there are not many emotions described. The eighth chapter is the most emotional. In this chapter, the queen holds a ball game, uses flamingos and hedgehogs as clubs and balls, and orders his subordinates to cut off the head of the Cheshire Cat. The plot of this chapter is intense, and there are many negative emotions expressed. 
+
+The ninth and tenth chapters are also very emotional. These two chapters are continuous content, telling the fake tortoise telling that he has been a real tortoise. Then is the story of Gryphon, Tortoise and Alice playing together. 
+
+
+\newpage
+
+
+```{r, fig.cap=""}
+# visualization 2: 
+sentimentplot <- with(
+    category_clean, 
+    sentiment_by(
+        get_sentences(string), 
+        list(section)
+    ))
+plot(uncombine(sentimentplot))
+
+# category_clean %>% 
+#      get_sentences() %>% 
+#      sentiment_by(by = NULL) %>% 
+#      ggplot() + 
+#      geom_density(aes(ave_sentiment)) 
+#The above plot is the average sentiment density plot. The curve shows a left-skewed distribution, that is, the density of negative emotions is greater.
+```
+
+Figure 2 a gentle curve, showing the emotional fluctuations of the book.
+
+
+\newpage
+
+
+```{r, fig.cap=""}
+# visualization 3: 
+emotionplot <- with(
+    category_clean, 
+    emotion_by(
+        get_sentences(string), 
+        list(section)
+    ))
+plot(uncombine(emotionplot))
+```
+
+As can be seen in Figure 3, anger, participation and sadness have the same trend. Disgust and fear has the same trend. Trust also has a specific significant trend.
+
+
+\newpage
+
+
+### More visualization
+
+```{r, fig.cap="negative and positive line plot"}
+# visualization 4: negative and positive line plot
 ggplot() + 
        geom_line(data=sentiment_neg, aes(x=element_id, y=sentiment),color="brown3") +
        geom_line(data=sentiment_pos, aes(x=element_id, y=sentiment),color="skyblue2") +
@@ -144,10 +209,14 @@ ggplot() +
 
 The figure above shows the changes in positive and negative emotions as the storyline develops. The two lines are like two time series.
 
-It can be seen that as the book goes forward, the positive emotions are less and the negative emotions appear more and more dense. This coincides with the middle and later part of the story, that is, the battle between Alice and the Red Queen. The adventure plot is becoming more and more exciting and thrilling, and more and more negative emotions.
+It can be seen that as the book goes forward, the positive emotions are lower and the negative emotions appear more and more dense. This coincides with the middle and later part of the story, that is, Alice met the Red Queen, participated in the chaotic ball game and the allegations of stealing pie, etc. The adventure plot is becoming more and more exciting and thrilling, and more and more negative emotions.
 
-```{r}
-# visualization 3: sentiment in each chapter
+
+\newpage
+
+
+```{r, fig.cap="sentiment point plot in each chapter"}
+# visualization 5: sentiment in each chapter
 ggplot(data=sentiment) + 
   geom_point(aes(x= element_id, y = sentiment, color = sentiment)) +
   scale_color_gradient(low="red", high="blue") +
@@ -157,22 +226,15 @@ ggplot(data=sentiment) +
   labs(x="story development for each chapter",y="sentiment")
 ```
 
-The above plot is a point plot of the emotions of each chapter.
+The above plot is a point plot of the emotions of each chapter. Each box represents a chapter, and each dot represents a sentence in the chapter. Positive sentiments are blue, and negative sentiments are red. 
 
-```{r}
-# visualization 4: average sentiment density plot
-category_clean %>% 
-     get_sentences() %>% 
-     sentiment_by(by = NULL) %>% 
-     ggplot() + 
-     geom_density(aes(ave_sentiment)) 
-```
 
-The above plot is the average sentiment density plot. The curve shows a left-skewed distribution, that is, the density of negative emotions is greater.
+\newpage
+
 
 ### Compare task 3 with task 2
 
-```{r, echo=FALSE, message= FALSE, warning = FALSE}
+```{r}
 # clean up the data
 library(tidytext)
 compare_data <- alice3 %>%
@@ -194,7 +256,7 @@ compare <- compare_data %>%
   mutate(sentiment = positive - negative) %>%
   mutate(method = "Bing et al.")
 
-compare_plot1 <- ggplot(compare, aes(index, sentiment)) +
+compare_plot1 <- ggplot(compare, aes(x=index, y=sentiment,fill=2)) +
   geom_col(show.legend = FALSE)
 
 # task 2 result
@@ -209,7 +271,7 @@ alice1 <- alice0 %>%
                                       ignore_case = TRUE)))) %>%
           filter(linenumber >= 30) %>%
           ungroup()
-library(tidytext)
+
 data(stop_words)
 alice2 <- alice1 %>%
           unnest_tokens(word, text) 
@@ -223,24 +285,69 @@ alice_sentiment <- alice2 %>%
   pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>% 
   mutate(sentiment = positive - negative)
 
-compare_plot2 <- ggplot(alice_sentiment, aes(index, sentiment)) +
+compare_plot2 <- ggplot(alice_sentiment, aes(x=index, y=sentiment,fill='red')) +
   geom_col(show.legend = FALSE)
 ```
 
-```{r}
-# visualization 5: compare task 3 with task 2
+```{r, fig.cap="compare task 3 with task 2 version 1"}
+# visualization 6: compare task 3 with task 2
 library(ggpubr)
-ggarrange(compare_plot1, compare_plot2, heights = c(2, 0.7),
+ggarrange(compare_plot1, compare_plot2, heights = c(2, 2),
           ncol = 1, nrow = 2)
 ```
 
 The above figure shows that task 2 and task 3 use the same method-Bing method to calculate emotional scores. From a trend point of view, the result of task 3 revealed more positive emotions than the result of task 2. The positive emotions in Chapters 1, 4 and 6 do not match the results of Task 2.
 
+\newpage
+
+
+```{r}
+# scaling two sentiment method into same unit 
+# method 1
+compare %<>% mutate(bing_scale=scale(sentiment)) %>% 
+                     select(method,index,bing_scale)
+colnames(compare)[which(names(compare) == "index")] <- "section"
+
+# method 2
+library(magrittr)
+compare_category <- category_clean %>% 
+    dplyr::mutate(sentence_split = get_sentences(string))%$%
+    sentiment_by(sentence_split, list(section))
+
+compare_category %<>%
+  mutate(sentimentr_scale=scale(ave_sentiment))
+
+# combine two method
+compare_final <- left_join(compare_category, compare, by='section') %>%
+  select(section, bing_scale, sentimentr_scale)
+
+#pivot_longer() "lengthens" data, increasing the number of rows and decreasing the number of columns
+#The inverse transformation is pivot_wider()
+compare_final %<>%
+  pivot_longer(cols=c('sentimentr_scale','bing_scale'),names_to = 'sentimentscore')
+```
+
+```{r, fig.cap="compare task 3 with task 2 version 2"}
+# visualization 7: compare task 3 with task 2
+compare_final %>%
+  ggplot(aes(x=factor(section), y=value)) +
+  geom_bar(aes(fill=factor(sentimentscore)),stat='identity',position = "dodge",width = 0.8) +
+  scale_fill_manual('factor(sentimentscore)',values=c("brown2","skyblue2"))
+```
+
+This method more accurately compares the difference between the results of task 2 and task 3. Because this method scales the data of two different scales, and finally becomes the same scale.
+
+It can be seen from the figure that the two methods are almost the same in some chapters. There are also individual chapters where the analysis is the opposite. Overall, the direction of analysis is similar. 
+
+
+\newpage
+
+
 ## Extra credit: character-level analysis
 
 According to Task 2, I selected six characters with the highest frequency. They are Alice, Queen, King, Turtle, Hatter and Gryphon.
 
-```{r, echo=FALSE, message= FALSE, warning = FALSE}
+```{r}
 # select 1 character
 sentiment$character <- ifelse(str_detect(sentiment$string,"Alice"), "Alice", ifelse(str_detect(sentiment$string,"Queen"), "Queen", ifelse(str_detect(sentiment$string,"King"), "King", ifelse(str_detect(sentiment$string,"Turtle"), "Turtle", ifelse(str_detect(sentiment$string,"Hatter"),"Hatter", ifelse(str_detect(sentiment$string,"Gryphon"),"Gryphon", ""))))))
 sentiment1 <- filter(sentiment, character != "")
@@ -252,8 +359,8 @@ sentiment2$character <- ifelse(str_detect(sentiment2$string,"Queen"),"A&Q", ifel
 sentiment2 <- filter(sentiment2, character != "")
 ```
 
-```{r}
-# visualization 6:
+```{r, fig.cap="single character analysis"}
+# visualization 8:
 ggplot(data=sentiment1) + 
   geom_histogram(aes(sentiment, fill=character), color="white") +
   facet_wrap(~character)
@@ -263,8 +370,12 @@ Then, I filtered them from each chapter, each paragraph, and each sentence. Draw
 
 It can be seen that the emotional scores of Gryphon and Hatter are positive, Turtle and Queen are negative, and Alice and King are relatively neutral.
 
-```{r}
-# visualization 7:
+
+\newpage
+
+
+```{r, fig.cap="two characters analysis"}
+# visualization 9:
 ggplot(data=sentiment2) + 
   geom_histogram(aes(sentiment, fill=character), color="white") +
   facet_wrap(~character)
@@ -274,14 +385,25 @@ Since Alice is the absolute protagonist of the book, I also calculated the emoti
 
 It can be seen that Alice and King had a very positive mood when they met. But her encounter with Turtle was negative. It can be inferred that when Alice is with different characters, the direction of the storyline is good or bad.
 
+
+\newpage
+
+
 ## Reference 
 
-Professor Haviland Wright, tnum - instructions and examples - v5.Rmd
-[https://www.gutenberg.org/ebooks/11](https://www.gutenberg.org/ebooks/11)
-[https://www.r-bloggers.com/2020/04/sentiment-analysis-in-r-with-sentimentr-that-handles-negation-valence-shifters/](https://www.r-bloggers.com/2020/04/sentiment-analysis-in-r-with-sentimentr-that-handles-negation-valence-shifters/)
-[https://www.rdocumentation.org/packages/stringr/versions/1.4.0/topics/str_detect](https://www.rdocumentation.org/packages/stringr/versions/1.4.0/topics/str_detect)
+Haviland Wright. (2021). tnum - instructions and examples - v5.Rmd [online]. Available from: https://learn.bu.edu/ultra/courses/_80585_1/cl/outline [accessed 8 December 2021]
 
+Gutenberg. (2008). Alice's Adventures in Wonderland by Lewis Carroll [online]. Available from: https://www.gutenberg.org/ebooks/11 [accessed 8 December 2021]
 
+Tyler Rinker and Tyler Rinker. (unknow time). Tyler Rinker [online]. Available from: https://github.com/trinker/sentimentr [accessed 8 December 2021]
 
+Yuli Jin. (2021). MA615_assignment4_new [online]. Available from: https://github.com/MA615-Yuli/MA615_assignment4_new [accessed 8 December 2021]
+
+Carolyn Wright. (2021). 
+Tom_Sawyer_Text_Analysis [online]. Available from: https://github.com/cwright04/Tom_Sawyer_Text_Analysis [accessed 8 December 2021]
+
+Rdocumentation. (unknow time). emotion_by: Emotion Rate By Groups [online]. Available from: https://www.rdocumentation.org/packages/sentimentr/versions/2.7.1/topics/emotion_by [accessed 8 December 2021]
+
+AbdulMajedRaja RS. (2020). Sentiment Analysis in R with {sentimentr} that handles Negation (Valence Shifters) [online]. Available from: https://www.r-bloggers.com/2020/04/sentiment-analysis-in-r-with-sentimentr-that-handles-negation-valence-shifters/ [accessed 8 December 2021]
 
 

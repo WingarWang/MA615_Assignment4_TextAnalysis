@@ -248,9 +248,12 @@ Finally, I drew a comparison chart of the four methods. I found that loughran is
 
 ## Reference 
 
-[https://www.gutenberg.org/ebooks/11]
-[https://www.tidytextmining.com/sentiment.html]
-[https://www.rdocumentation.org/packages/textdata/versions/0.4.1]
-[https://www.rdocumentation.org/packages/textdata/versions/0.4.1/topics/lexicon_loughran]
+Gutenberg. (2008). Alice's Adventures in Wonderland by Lewis Carroll [online]. Available from: https://www.gutenberg.org/ebooks/11 [accessed 8 December 2021]
+
+Julia Silge and David Robinson. (unknow time). Text Mining with R: A Tidy Approach [online]. Available from: https://www.tidytextmining.com/sentiment.html [accessed 8 December 2021]
+
+Rdocumentation. (unknow time). textdata [online]. Available from: https://www.rdocumentation.org/packages/textdata/versions/0.4.1 [accessed 8 December 2021]
+
+Rdocumentation. (unknow time). lexicon_loughran: Loughran-McDonald sentiment lexicon [online]. Available from: https://www.rdocumentation.org/packages/textdata/versions/0.4.1/topics/lexicon_loughran [accessed 8 December 2021]
 
 
