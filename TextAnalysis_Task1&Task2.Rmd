@@ -10,13 +10,13 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(warning=F, message = F, echo=F, highlight=F)
-knitr::opts_chunk$set(fig.width=6, fig.height=4,fig.align = "center") 
+knitr::opts_chunk$set(fig.width=7, fig.height=5,fig.align = "center") 
 ```
 
 
 ## Task 1: Pick a book
 
-Alice's Adventures in Wonderland is a science fiction novel that I loved to read when I was young. So I chose this book to commemorate my lost childhood.
+Alice's Adventures in Wonderland is a children literature that I loved to read when I was young. So I chose this book to look back at my childhood.
 
 ```{r}
 # input the book
@@ -53,8 +53,8 @@ check <- alice2 %>%
                 count(word, sort = TRUE)
 ```
 
-```{r, fig.cap="xxx"}
-# visualization 1: the most common words
+```{r, fig.cap="the eight most common words"}
+# visualization 1: the eight most common words
 library(ggplot2)
 alice2 %>%
        count(word, sort = TRUE) %>%
@@ -69,21 +69,21 @@ I calculated the eight most frequent words in the book, and the results are as f
 
 At the same time, there are 5 words that are the names of characters, such as Queen, King, Turtle, Hatter and Gryphon, which shows that they are the main supporting roles of the book.
 
-Time is the second most frequent word in this book, reflecting the urgency of Alice's adventure in her dream.
+Time is the second most frequent word in this book, reflecting Alice raced against time in her adventure.
 
 
-## TASK 2: bag of word analysis
+## Task 2: bag of word analysis
 
-```{r}
+```{r, results='hide'}
 # input lexicons
 library(tidytext)
-get_sentiments("afinn")
-get_sentiments("bing")
-get_sentiments("nrc")
+#get_sentiments("afinn")
+#get_sentiments("bing")
+#get_sentiments("nrc")
 
 # fliter nrc: joy
 nrc_joy <- get_sentiments("nrc") %>% 
-  filter(sentiment == "joy")
+           filter(sentiment == "joy")
 
 alice2 %>%
        inner_join(nrc_joy) %>%
@@ -98,15 +98,23 @@ alice_sentiment <- alice2 %>%
   mutate(sentiment = positive - negative)
 ```
 
-Based on the plot trajectory of Alice's Adventures in Wonderland, I calculated the emotional score. The x-axis tracks the narrative time in the text part, and the y-axis is the difference between positive and negative emotions.
-
-```{r, fig.cap="xxx"}
+```{r, fig.cap="sentiment scores"}
 # visualization 2: sentiment scores across the plot trajectory
 ggplot(alice_sentiment, aes(index, sentiment)) +
   geom_col(show.legend = FALSE)
 ```
 
-It can be seen that almost all the plots in this book are negative emotions. This result coincides with the book's absurd, bizarre fictional scenes, weird characters, and thrilling adventure stories.
+Based on the plot trajectory of Alice's Adventures in Wonderland, I calculated the emotional score. The x-axis tracks the narrative time in the text part, and the y-axis is the difference between positive and negative emotions. It can be seen that almost all the plots in this book are negative emotions. 
+
+This book is about Alice falling into a rabbit hole by accident. She met a lot of strange people and animals, such as the playing cards behind a small door, the rough queen of hearts. In this world of fantasy and madness, Alice fights against violence and helps others. 
+
+So figure 2 coincides with the book's absurd, bizarre fictional scenes, weird characters, and thrilling adventure stories.
+
+
+\newpage
+
+
+### Comparing the three sentiment dictionaries
 
 ```{r}
 # prepare for comparing the three sentiment dictionaries
@@ -131,9 +139,7 @@ bing_and_nrc <- bind_rows(
                 mutate(sentiment = positive - negative)
 ```
 
-### comparing the three sentiment dictionaries
-
-```{r, fig.cap="xxx"}
+```{r, fig.cap="comparing the three sentiment dictionaries"}
 # visualization 3: comparing the three sentiment dictionaries
 bind_rows(afinn, bing_and_nrc) %>%
                                ggplot(aes(index, sentiment, fill = method)) +
@@ -143,6 +149,12 @@ bind_rows(afinn, bing_and_nrc) %>%
 
 According to text mining with R, I imported AFINN dictionary, Bing dictionary and NRC dictionary. It can be seen that the results of AFINN and Bing tend to be consistent, but the results of NRC are more positive, and the result of AFINN has more variance.
 
+
+\newpage
+
+
+### The most common positive and negative words
+
 ```{r}
 # count the most common positive and negative words
 bing_word_counts <- alice2 %>%
@@ -151,7 +163,7 @@ bing_word_counts <- alice2 %>%
                            ungroup()
 ```
 
-```{r, fig.cap="xxx"}
+```{r, fig.cap="the most common positive and negative words"}
 # visualization 4: the most common positive and negative words
 bing_word_counts %>%
                  group_by(sentiment) %>%
@@ -164,13 +176,12 @@ bing_word_counts %>%
                  labs(x = "Contribution to sentiment", y = NULL)
 ```
 
-\newpage
+Figure 4 shows the 12 most frequently positive and negative words. We can see that negative words are more than positive words in the book. Among them, mock is usually used to describe the action state of the characters, and express the absurd content of the story. And beautiful is more used to express the environment, reflecting that Alice has entered a fantasy and extraordinary world of fiction. 
 
-### word cloud
 
-The plot above shows the 12 most frequently positive or negative words.
+### Word cloud
 
-```{r fig.width=6, fig.height=4,fig.cap="sentiment word cloud"}
+```{r fig.width=4, fig.height=4,fig.cap="sentiment word cloud version 1"}
 # visualization 5: wordclouds 1
 library(wordcloud)
 alice2 %>%
@@ -179,7 +190,7 @@ alice2 %>%
   with(wordcloud(word, n, max.words = 55,random.order=TRUE, colors=c("palegreen3","lightpink1")))
 ```
 
-```{r fig.width=6, fig.height=4,fig.cap="sentiment word cloud"}
+```{r fig.width=6, fig.height=4,fig.cap="sentiment word cloud version 2"}
 # visualization 6: wordclouds 2
 library(reshape2)
 alice2 %>%
@@ -190,13 +201,15 @@ alice2 %>%
                    max.words = 50)
 ```
 
-Subsequently, I drew two word cloud plots of frequency. This is the visualization of the previous plot.
+Subsequently, I drew two word cloud plots of words frequency. These are the visualization of the previous plot.
+
 
 \newpage
 
+
 ## Extra credit: another lexicon
 
-Coincidentally, I found a new method when the system reported an error, which said "Error in match.arg(lexicon) : 'arg' should be one of “bing”, “afinn”, “loughran”, “nrc”".
+Coincidentally, I found a new method "loughran" when the system reported an error, which said "Error in match.arg(lexicon) : 'arg' should be one of “bing”, “afinn”, “loughran”, “nrc”".
 
 ```{r}
 # another method
@@ -208,31 +221,36 @@ alice_loughran <- alice2 %>%
   mutate(method = "LOUGHRAN")
 ```
 
-```{r, fig.cap="xxx"}
+```{r, fig.cap="sentiment scores using loughran"}
 # visualization 7: 
 ggplot(alice_loughran, aes(index, sentiment)) +
   geom_col(show.legend = FALSE)
 ```
 
-### comparing the four sentiment dictionaries
+Figure 7 shows the sentiment score along the story line  using loughran dictionary. The results are almost all negative emotions, consistent with the results of other dictionaries. 
 
-Finally, I drew a comparison chart of the four methods. I found that loughran is like a neutralized version of AFINN and Bing. Maybe this is a more reliable sentiment analysis package.
 
-```{r, fig.cap="xxx"}
-# visualization 8: comparing the three sentiment dictionaries
+\newpage
+
+
+### Comparing the four sentiment dictionaries
+
+```{r, fig.cap="comparing the four sentiment dictionaries"}
+# visualization 8: comparing the four sentiment dictionaries
 bind_rows(afinn, bing_and_nrc, alice_loughran) %>%
                                ggplot(aes(index, sentiment, fill = method)) +
                                geom_col(show.legend = FALSE) +
                                facet_wrap(~method, ncol = 1, scales = "free_y")
 ```
 
-\newpage
+Finally, I drew a comparison chart of the four methods. I found that loughran is like a neutralized version of AFINN and Bing. Maybe this is a more reliable sentiment analysis package.
+
 
 ## Reference 
 
-[https://www.gutenberg.org/ebooks/11](https://www.gutenberg.org/ebooks/11)
-[https://www.tidytextmining.com/sentiment.html](https://www.tidytextmining.com/sentiment.html)
-[https://www.rdocumentation.org/packages/textdata/versions/0.4.1](https://emilhvitfeldt.github.io/textdata/reference/lexicon_loughran.html)
-[https://www.rdocumentation.org/packages/textdata/versions/0.4.1/topics/lexicon_loughran](https://www.rdocumentation.org/packages/textdata/versions/0.4.1/topics/lexicon_loughran)
+[https://www.gutenberg.org/ebooks/11]
+[https://www.tidytextmining.com/sentiment.html]
+[https://www.rdocumentation.org/packages/textdata/versions/0.4.1]
+[https://www.rdocumentation.org/packages/textdata/versions/0.4.1/topics/lexicon_loughran]
 
 
